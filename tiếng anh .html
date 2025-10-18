@@ -1,0 +1,1538 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Học Từ Vựng - Generation Gap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            box-sizing: border-box;
+        }
+        .flip-card {
+            perspective: 1000px;
+        }
+        .flip-card-inner {
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            backface-visibility: hidden;
+        }
+        .flip-card-back {
+            transform: rotateY(180deg);
+        }
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+        .vocab-popup {
+            position: fixed;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            padding: 16px;
+            z-index: 1000;
+            max-width: 300px;
+            border: 2px solid #3b82f6;
+            transform: translateY(-10px);
+            opacity: 0;
+            transition: all 0.2s ease;
+        }
+        .vocab-popup.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .game-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            transform: scale(1);
+        }
+        .game-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        .game-card.selected {
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+            border: 3px solid #3b82f6;
+        }
+        .game-card.matched {
+            background: linear-gradient(135deg, #10b981, #34d399);
+            color: white;
+            transform: scale(0.95);
+            cursor: default;
+        }
+        .game-card.wrong {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            color: white;
+            animation: shake 0.5s ease-in-out;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .game-card.correct-flash {
+            animation: correctFlash 0.6s ease-in-out;
+        }
+        @keyframes correctFlash {
+            0% { background: #10b981; transform: scale(1.1); }
+            50% { background: #34d399; transform: scale(1.15); }
+            100% { background: #10b981; transform: scale(0.95); }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-pink-200 via-blue-200 via-rose-200 to-red-200 min-h-full" style="background: linear-gradient(135deg, #fce7f3 0%, #dbeafe 25%, #fce7f3 50%, #fecaca 75%, #fce7f3 100%);">
+    <div class="container mx-auto px-4 py-6">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">☀️ 📚 Generation Gap Vocabulary 🎀</h1>
+            <p class="text-gray-700">✨ Học từ vựng về khoảng cách thế hệ ✨</p>
+            
+            <!-- Overall Score Display -->
+            <div class="mt-6 bg-white/20 backdrop-blur-sm rounded-2xl p-4 max-w-2xl mx-auto border border-white/30">
+                <h3 class="text-lg font-semibold text-gray-800 mb-3">🏆 Điểm tổng kết 🌟</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    <div class="bg-pink-200/80 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-pink-800 font-medium">📖 Reading</span>
+                            <span class="text-pink-900 font-bold" id="readingScore">0/100</span>
+                        </div>
+                        <div class="bg-pink-300 rounded-full h-2 mt-2">
+                            <div id="readingProgress" class="bg-pink-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-purple-200/80 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-purple-800 font-medium">🃏 Flashcards</span>
+                            <span class="text-purple-900 font-bold" id="flashcardScore">0/100</span>
+                        </div>
+                        <div class="bg-purple-300 rounded-full h-2 mt-2">
+                            <div id="flashcardProgress" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-green-200/80 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-green-800 font-medium">📝 Grammar</span>
+                            <span class="text-green-900 font-bold" id="grammarScoreOverall">0/100</span>
+                        </div>
+                        <div class="bg-green-300 rounded-full h-2 mt-2">
+                            <div id="grammarProgressOverall" class="bg-green-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="bg-orange-200/80 rounded-lg p-3">
+                        <div class="flex items-center justify-between">
+                            <span class="text-orange-800 font-medium">🎮 Matching</span>
+                            <span class="text-orange-900 font-bold" id="matchingScoreOverall">0/100</span>
+                        </div>
+                        <div class="bg-orange-300 rounded-full h-2 mt-2">
+                            <div id="matchingProgressOverall" class="bg-orange-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="mt-4 text-center">
+                    <div class="text-gray-800 text-lg font-bold">
+                        ✨ Tổng điểm: <span id="totalScore">0</span>/400 🎀
+                    </div>
+                    <div class="text-gray-700 text-sm mt-1" id="overallMessage">
+                        Hãy bắt đầu học để tích lũy điểm! 🌟
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="flex justify-center mb-8">
+            <div class="bg-white/40 backdrop-blur-sm rounded-full p-1">
+                <button id="readingBtn" class="px-6 py-2 rounded-full text-gray-800 font-medium transition-all bg-pink-200">
+                    🌸 📖 Reading 🎀
+                </button>
+                <button id="flashcardBtn" class="px-6 py-2 rounded-full text-gray-800 font-medium transition-all hover:bg-white/40">
+                    ☀️ 🃏 Flashcards ✨
+                </button>
+                <button id="grammarBtn" class="px-6 py-2 rounded-full text-gray-800 font-medium transition-all hover:bg-white/40">
+                    🌿 📝 Grammar 🌱
+                </button>
+                <button id="matchingBtn" class="px-6 py-2 rounded-full text-gray-800 font-medium transition-all hover:bg-white/40">
+                    🎯 🎮 Matching 🌟
+                </button>
+
+            </div>
+        </nav>
+
+        <!-- Reading Section -->
+        <section id="readingSection" class="max-w-4xl mx-auto">
+            <div class="bg-pink-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-pink-200">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">🌸 Understanding Generation Gap 🎀</h2>
+                
+                <div class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+                    <p class="mb-4">
+                        The <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="generation gap">generation gap</span> refers to the differences in opinions, values, and behaviors between people of different generations. This <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="phenomenon">phenomenon</span> has become increasingly <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="prominent">prominent</span> in modern society, where rapid <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="technological advancement">technological advancement</span> and social changes create <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="distinct">distinct</span> experiences for each generation.
+                    </p>
+                    
+                    <p class="mb-4">
+                        <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="traditional values">Traditional values</span> often <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="clash">clash</span> with <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="contemporary">contemporary</span> attitudes, leading to <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="misunderstanding">misunderstandings</span> between parents and children. While older generations may <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="prioritize">prioritize</span> <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="stability">stability</span> and <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="conformity">conformity</span>, younger people often seek <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="independence">independence</span> and <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="self-expression">self-expression</span>.
+                    </p>
+                    
+                    <p class="mb-6">
+                        However, <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="bridge the gap">bridging this gap</span> requires <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="mutual respect">mutual respect</span>, <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="open communication">open communication</span>, and <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="willingness">willingness</span> to understand different <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="perspective">perspectives</span>. Both generations can learn from each other's experiences and <span class="vocab-word font-semibold text-blue-600 cursor-pointer hover:bg-blue-100 px-1 rounded transition-colors" data-word="wisdom">wisdom</span>.
+                    </p>
+                </div>
+
+                <div class="mt-8">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">🎯 ✨ Từ vựng quan trọng ✨ 🎀</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="bg-pink-100 p-4 rounded-lg border-l-4 border-pink-300">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-pink-700">generation gap</span>
+                                <button class="speak-btn text-pink-500 hover:text-pink-700" data-text="generation gap">🔊</button>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">khoảng cách thế hệ</p>
+                        </div>
+                        <div class="bg-rose-100 p-4 rounded-lg border-l-4 border-rose-300">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-rose-700">traditional values</span>
+                                <button class="speak-btn text-rose-500 hover:text-rose-700" data-text="traditional values">🔊</button>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">giá trị truyền thống</p>
+                        </div>
+                        <div class="bg-pink-200 p-4 rounded-lg border-l-4 border-pink-400">
+                            <div class="flex items-center justify-between">
+                                <span class="font-semibold text-pink-800">mutual respect</span>
+                                <button class="speak-btn text-pink-600 hover:text-pink-800" data-text="mutual respect">🔊</button>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-1">tôn trọng lẫn nhau</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Grammar Section -->
+        <section id="grammarSection" class="max-w-4xl mx-auto hidden">
+            <div class="bg-green-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-green-200">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">🌿 Grammar Practice 🌱</h2>
+                <p class="text-center text-gray-600 mb-8">☀️ Present Simple vs Present Continuous & Stative Verbs ✨</p>
+                
+                <!-- Progress -->
+                <div class="mb-8">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-sm font-medium text-gray-700">Câu <span id="grammarCurrent">1</span> / <span id="grammarTotal">15</span></span>
+                        <span class="text-sm font-medium text-gray-700">Điểm: <span id="grammarScore">0</span></span>
+                    </div>
+                    <div class="bg-gray-200 rounded-full h-2">
+                        <div id="grammarProgress" class="bg-green-300 h-2 rounded-full transition-all duration-300" style="width: 6.67%"></div>
+                    </div>
+                </div>
+
+                <!-- Question -->
+                <div class="bg-green-100 rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4" id="questionText">
+                        My sister _____ (study) at university right now.
+                    </h3>
+                    
+                    <!-- Options -->
+                    <div class="space-y-3" id="optionsContainer">
+                        <label class="flex items-center p-3 bg-white rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+                            <input type="radio" name="answer" value="studies" class="mr-3">
+                            <span>studies</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-white rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+                            <input type="radio" name="answer" value="is studying" class="mr-3">
+                            <span>is studying</span>
+                        </label>
+                        <label class="flex items-center p-3 bg-white rounded-lg cursor-pointer hover:bg-green-100 transition-colors">
+                            <input type="radio" name="answer" value="study" class="mr-3">
+                            <span>study</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Feedback -->
+                <div id="feedback" class="hidden mb-6 p-4 rounded-lg">
+                    <p id="feedbackText" class="font-medium mb-2"></p>
+                    <p id="explanationText" class="text-sm"></p>
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex justify-center space-x-4">
+                    <button id="checkBtn" class="bg-green-300 hover:bg-green-400 text-gray-800 px-6 py-3 rounded-full font-medium transition-colors">
+                        ☀️ Kiểm tra ✨
+                    </button>
+                    <button id="nextGrammarBtn" class="bg-emerald-300 hover:bg-emerald-400 text-gray-800 px-6 py-3 rounded-full font-medium transition-colors hidden">
+                        🌱 Câu tiếp theo 🌿
+                    </button>
+                </div>
+
+                <!-- Results -->
+                <div id="resultsSection" class="hidden text-center mt-8 p-6 bg-gradient-to-r from-green-100 to-blue-100 rounded-xl">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">🎉 Hoàn thành!</h3>
+                    <p class="text-lg mb-4">Điểm của bạn: <span id="finalScore" class="font-bold text-blue-600"></span>/15</p>
+                    <p id="scoreMessage" class="text-gray-700 mb-4"></p>
+                    <button id="restartBtn" class="bg-lime-300 hover:bg-lime-400 text-gray-800 px-6 py-3 rounded-full font-medium transition-colors">
+                        ☀️ Làm lại ✨
+                    </button>
+                </div>
+            </div>
+        </section>
+
+
+
+        <!-- Matching Game Section -->
+        <section id="matchingSection" class="max-w-4xl mx-auto hidden">
+            <div class="bg-orange-50/95 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-orange-200">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">🎯 Word Matching Game 🌟</h2>
+                <p class="text-center text-gray-600 mb-8">🎮 Ghép từ tiếng Anh với nghĩa tiếng Việt! ✨</p>
+                
+                <!-- Game Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                    <div class="bg-orange-100 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-orange-800" id="matchingScore">0</div>
+                        <div class="text-sm text-gray-600">Điểm</div>
+                    </div>
+                    <div class="bg-yellow-100 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-yellow-800" id="matchingTime">0:00</div>
+                        <div class="text-sm text-gray-600">Thời gian</div>
+                    </div>
+                    <div class="bg-green-100 rounded-lg p-4 text-center">
+                        <div class="text-2xl font-bold text-green-800" id="matchingPairs">0/10</div>
+                        <div class="text-sm text-gray-600">Cặp đã ghép</div>
+                    </div>
+                </div>
+
+                <!-- Game Board -->
+                <div id="gameBoard" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                    <!-- Cards will be generated here -->
+                </div>
+
+                <!-- Game Controls -->
+                <div class="flex justify-center space-x-4 mb-6">
+                    <button id="startGameBtn" class="bg-orange-300 hover:bg-orange-400 text-gray-800 px-6 py-3 rounded-full font-medium transition-colors">
+                        🎮 Bắt đầu game ✨
+                    </button>
+                    <button id="resetGameBtn" class="bg-yellow-300 hover:bg-yellow-400 text-gray-800 px-6 py-3 rounded-full font-medium transition-colors hidden">
+                        🔄 Chơi lại 🌟
+                    </button>
+                </div>
+
+                <!-- Game Results -->
+                <div id="gameResults" class="hidden text-center p-6 bg-gradient-to-r from-orange-100 to-yellow-100 rounded-xl">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">🎉 Hoàn thành!</h3>
+                    <p class="text-lg mb-2">Thời gian: <span id="finalTime" class="font-bold text-orange-600"></span></p>
+                    <p class="text-lg mb-4">Điểm: <span id="finalMatchingScore" class="font-bold text-orange-600"></span>/100</p>
+                    <p id="gameMessage" class="text-gray-700 mb-4"></p>
+                </div>
+
+                <!-- Instructions -->
+                <div class="bg-orange-100/50 rounded-lg p-4 text-center">
+                    <h4 class="font-semibold text-gray-800 mb-2">🎯 Cách chơi:</h4>
+                    <p class="text-gray-700 text-sm">
+                        Nhấn vào các thẻ để ghép từ tiếng Anh với nghĩa tiếng Việt tương ứng. 
+                        Ghép đúng sẽ được điểm, ghép sai sẽ bị trừ điểm. Hoàn thành càng nhanh càng tốt! 🌟
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Flashcard Section -->
+        <section id="flashcardSection" class="max-w-2xl mx-auto hidden">
+            <div class="text-center mb-6">
+                <div class="bg-purple-100/70 backdrop-blur-sm rounded-full px-6 py-2 inline-block mb-4 border border-purple-200">
+                    <span class="text-purple-900 font-medium">Thẻ <span id="currentCard">1</span> / <span id="totalCards">20</span></span>
+                </div>
+                <div class="bg-purple-100/70 backdrop-blur-sm rounded-full h-2 max-w-md mx-auto border border-purple-200">
+                    <div id="progressBar" class="progress-bar bg-purple-400 h-2 rounded-full" style="width: 5%"></div>
+                </div>
+            </div>
+
+            <div class="flip-card h-80 mb-6" id="flashcard">
+                <div class="flip-card-inner relative w-full h-full">
+                    <div class="flip-card-front absolute w-full h-full">
+                        <div class="bg-white rounded-2xl shadow-2xl h-full flex flex-col justify-center items-center p-8 cursor-pointer">
+                            <div class="text-center">
+                                <h3 class="text-3xl font-bold text-gray-800 mb-4" id="englishWord">generation gap</h3>
+                                <div class="space-y-3">
+                                    <button class="speak-btn bg-purple-300 hover:bg-purple-400 text-gray-800 px-4 py-2 rounded-full transition-colors" id="pronunciationBtn">
+                                        ☀️ 🔊 Phát âm ✨
+                                    </button>
+                                    <div class="flex space-x-2">
+                                        <button class="record-btn bg-pink-300 hover:bg-pink-400 text-gray-800 px-3 py-2 rounded-full transition-colors text-sm" id="recordBtn">
+                                            🎤 Thu âm
+                                        </button>
+                                        <button class="play-recording-btn bg-violet-300 hover:bg-violet-400 text-gray-800 px-3 py-2 rounded-full transition-colors text-sm hidden" id="playRecordingBtn">
+                                            ▶️ Nghe lại
+                                        </button>
+                                    </div>
+                                    <div id="recordingStatus" class="text-sm text-gray-600 hidden"></div>
+                                </div>
+                                <p class="text-gray-500 mt-4">🎀 Nhấn để xem nghĩa ✨</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flip-card-back absolute w-full h-full">
+                        <div class="bg-gradient-to-br from-purple-300 to-violet-300 rounded-2xl shadow-2xl h-full flex flex-col justify-center items-center p-8 cursor-pointer text-gray-800">
+                            <div class="text-center">
+                                <h3 class="text-2xl font-bold mb-2" id="vietnameseWord">khoảng cách thế hệ</h3>
+                                <p class="text-gray-700 mb-4" id="wordType">(noun)</p>
+                                <p class="text-lg leading-relaxed" id="definition">Sự khác biệt về quan điểm, giá trị và hành vi giữa các thế hệ khác nhau</p>
+                                <p class="text-gray-700 mt-4">☀️ Nhấn để quay lại 🎀</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center space-x-4">
+                <button id="prevBtn" class="bg-purple-200 hover:bg-purple-300 text-gray-800 px-6 py-3 rounded-full font-medium transition-colors backdrop-blur-sm">
+                    🎀 ← Trước
+                </button>
+                <button id="nextBtn" class="bg-purple-200 hover:bg-purple-300 text-gray-800 px-6 py-3 rounded-full font-medium transition-colors backdrop-blur-sm">
+                    Tiếp → ☀️
+                </button>
+            </div>
+
+            <div class="text-center mt-6">
+                <button id="shuffleBtn" class="bg-violet-200 hover:bg-violet-300 text-gray-800 px-6 py-2 rounded-full font-medium transition-colors">
+                    ✨ 🔀 Xáo trộn 🎀
+                </button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const vocabulary = [
+            {
+                english: "generation gap",
+                vietnamese: "khoảng cách thế hệ",
+                type: "noun",
+                definition: "Sự khác biệt về quan điểm, giá trị và hành vi giữa các thế hệ khác nhau"
+            },
+            {
+                english: "traditional values",
+                vietnamese: "giá trị truyền thống",
+                type: "noun phrase",
+                definition: "Những nguyên tắc và niềm tin được truyền lại từ thế hệ trước"
+            },
+            {
+                english: "contemporary",
+                vietnamese: "đương đại, hiện tại",
+                type: "adjective",
+                definition: "Thuộc về thời hiện tại, hiện đại"
+            },
+            {
+                english: "mutual respect",
+                vietnamese: "tôn trọng lẫn nhau",
+                type: "noun phrase",
+                definition: "Sự kính trọng và coi trọng nhau giữa hai bên"
+            },
+            {
+                english: "conformity",
+                vietnamese: "sự tuân thủ",
+                type: "noun",
+                definition: "Hành động theo các quy tắc hoặc tiêu chuẩn được chấp nhận"
+            },
+            {
+                english: "independence",
+                vietnamese: "sự độc lập",
+                type: "noun",
+                definition: "Khả năng tự chủ và không phụ thuộc vào người khác"
+            },
+            {
+                english: "self-expression",
+                vietnamese: "sự thể hiện bản thân",
+                type: "noun",
+                definition: "Việc bày tỏ cá tính và cảm xúc của mình"
+            },
+            {
+                english: "stability",
+                vietnamese: "sự ổn định",
+                type: "noun",
+                definition: "Trạng thái không thay đổi và vững chắc"
+            },
+            {
+                english: "perspective",
+                vietnamese: "quan điểm, góc nhìn",
+                type: "noun",
+                definition: "Cách nhìn nhận và hiểu về một vấn đề"
+            },
+            {
+                english: "clash",
+                vietnamese: "xung đột, va chạm",
+                type: "verb/noun",
+                definition: "Sự bất đồng hoặc mâu thuẫn mạnh mẽ"
+            },
+            {
+                english: "misunderstanding",
+                vietnamese: "sự hiểu lầm",
+                type: "noun",
+                definition: "Việc hiểu sai ý nghĩa hoặc mục đích của ai đó"
+            },
+            {
+                english: "bridge the gap",
+                vietnamese: "thu hẹp khoảng cách",
+                type: "verb phrase",
+                definition: "Làm giảm sự khác biệt giữa hai bên"
+            },
+            {
+                english: "open communication",
+                vietnamese: "giao tiếp cởi mở",
+                type: "noun phrase",
+                definition: "Việc trao đổi thông tin một cách thẳng thắn và trung thực"
+            },
+            {
+                english: "wisdom",
+                vietnamese: "sự khôn ngoan",
+                type: "noun",
+                definition: "Kiến thức và kinh nghiệm sâu sắc về cuộc sống"
+            },
+            {
+                english: "prominent",
+                vietnamese: "nổi bật, rõ rệt",
+                type: "adjective",
+                definition: "Dễ nhận thấy hoặc quan trọng"
+            },
+            {
+                english: "phenomenon",
+                vietnamese: "hiện tượng",
+                type: "noun",
+                definition: "Sự việc hoặc tình huống có thể quan sát được"
+            },
+            {
+                english: "technological advancement",
+                vietnamese: "tiến bộ công nghệ",
+                type: "noun phrase",
+                definition: "Sự phát triển và cải tiến trong lĩnh vực công nghệ"
+            },
+            {
+                english: "distinct",
+                vietnamese: "riêng biệt, khác biệt",
+                type: "adjective",
+                definition: "Có sự khác biệt rõ ràng và dễ nhận biết"
+            },
+            {
+                english: "prioritize",
+                vietnamese: "ưu tiên",
+                type: "verb",
+                definition: "Coi trọng hoặc đặt lên hàng đầu"
+            },
+            {
+                english: "willingness",
+                vietnamese: "sự sẵn sàng",
+                type: "noun",
+                definition: "Thái độ muốn làm điều gì đó một cách tự nguyện"
+            }
+        ];
+
+
+
+        // Grammar questions data
+        const grammarQuestions = [
+            {
+                question: "My sister _____ (study) at university right now.",
+                options: ["studies", "is studying", "study"],
+                correct: "is studying",
+                explanation: "Dùng Present Continuous vì có 'right now' - hành động đang diễn ra tại thời điểm nói."
+            },
+            {
+                question: "I _____ (understand) what you mean.",
+                options: ["understand", "am understanding", "understands"],
+                correct: "understand",
+                explanation: "'Understand' là stative verb (động từ trạng thái), không dùng với thì tiếp diễn."
+            },
+            {
+                question: "She usually _____ (go) to work by bus.",
+                options: ["goes", "is going", "go"],
+                correct: "goes",
+                explanation: "Dùng Present Simple với 'usually' - thói quen, hành động lặp lại."
+            },
+            {
+                question: "Look! The children _____ (play) in the garden.",
+                options: ["play", "are playing", "plays"],
+                correct: "are playing",
+                explanation: "Dùng Present Continuous với 'Look!' - hành động đang diễn ra ngay lúc này."
+            },
+            {
+                question: "This cake _____ (taste) delicious!",
+                options: ["tastes", "is tasting", "taste"],
+                correct: "tastes",
+                explanation: "'Taste' ở đây là stative verb (có vị như thế nào), không dùng thì tiếp diễn."
+            },
+            {
+                question: "We _____ (have) dinner at 7 PM every day.",
+                options: ["have", "are having", "has"],
+                correct: "have",
+                explanation: "Dùng Present Simple với 'every day' - thói quen hàng ngày."
+            },
+            {
+                question: "Be quiet! The baby _____ (sleep).",
+                options: ["sleeps", "is sleeping", "sleep"],
+                correct: "is sleeping",
+                explanation: "Dùng Present Continuous - hành động đang diễn ra tại thời điểm nói."
+            },
+            {
+                question: "I _____ (think) this movie is boring.",
+                options: ["think", "am thinking", "thinks"],
+                correct: "think",
+                explanation: "'Think' ở đây có nghĩa 'có ý kiến' - là stative verb, không dùng thì tiếp diễn."
+            },
+            {
+                question: "My parents _____ (live) in London since 2010.",
+                options: ["live", "are living", "lives"],
+                correct: "live",
+                explanation: "Dùng Present Simple với 'since' - trạng thái kéo dài từ quá khứ đến hiện tại."
+            },
+            {
+                question: "What _____ you _____ (do) at the moment?",
+                options: ["do...do", "are...doing", "does...do"],
+                correct: "are...doing",
+                explanation: "Dùng Present Continuous với 'at the moment' - hành động đang diễn ra."
+            },
+            {
+                question: "The Earth _____ (revolve) around the Sun.",
+                options: ["revolves", "is revolving", "revolve"],
+                correct: "revolves",
+                explanation: "Dùng Present Simple cho sự thật khoa học, chân lý."
+            },
+            {
+                question: "I _____ (see) what you mean now.",
+                options: ["see", "am seeing", "sees"],
+                correct: "see",
+                explanation: "'See' ở đây có nghĩa 'hiểu' - là stative verb, không dùng thì tiếp diễn."
+            },
+            {
+                question: "She _____ (work) on a new project this week.",
+                options: ["works", "is working", "work"],
+                correct: "is working",
+                explanation: "Dùng Present Continuous với 'this week' - hành động tạm thời trong khoảng thời gian này."
+            },
+            {
+                question: "Water _____ (boil) at 100 degrees Celsius.",
+                options: ["boils", "is boiling", "boil"],
+                correct: "boils",
+                explanation: "Dùng Present Simple cho sự thật khoa học, quy luật tự nhiên."
+            },
+            {
+                question: "I _____ (love) chocolate ice cream.",
+                options: ["love", "am loving", "loves"],
+                correct: "love",
+                explanation: "'Love' là stative verb (cảm xúc), không dùng với thì tiếp diễn."
+            }
+        ];
+
+        let currentIndex = 0;
+        let isFlipped = false;
+        let currentGrammarIndex = 0;
+        let grammarScore = 0;
+        let hasAnswered = false;
+        
+        // Overall scoring system
+        let overallScore = {
+            reading: 0,
+            flashcards: 0,
+            grammar: 0,
+            matching: 0,
+            readingCompleted: false,
+            flashcardsCompleted: false,
+            grammarCompleted: false,
+            matchingCompleted: false
+        };
+        
+        let flashcardViewCount = 0;
+        let readingWordsClicked = new Set();
+        
+        // Matching game variables
+        let gameCards = [];
+        let selectedCards = [];
+        let matchedPairs = 0;
+        let gameScore = 0;
+        let gameStartTime = 0;
+        let gameTimer = null;
+        let isGameActive = false;
+
+
+
+        // Navigation
+        const readingBtn = document.getElementById('readingBtn');
+        const flashcardBtn = document.getElementById('flashcardBtn');
+        const grammarBtn = document.getElementById('grammarBtn');
+        const matchingBtn = document.getElementById('matchingBtn');
+        const readingSection = document.getElementById('readingSection');
+        const flashcardSection = document.getElementById('flashcardSection');
+        const grammarSection = document.getElementById('grammarSection');
+        const matchingSection = document.getElementById('matchingSection');
+
+        // Grammar elements
+        const grammarCurrent = document.getElementById('grammarCurrent');
+        const grammarTotal = document.getElementById('grammarTotal');
+        const grammarScoreSpan = document.getElementById('grammarScore');
+        const grammarProgress = document.getElementById('grammarProgress');
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const feedback = document.getElementById('feedback');
+        const feedbackText = document.getElementById('feedbackText');
+        const explanationText = document.getElementById('explanationText');
+        const checkBtn = document.getElementById('checkBtn');
+        const nextGrammarBtn = document.getElementById('nextGrammarBtn');
+        const resultsSection = document.getElementById('resultsSection');
+        const finalScore = document.getElementById('finalScore');
+        const scoreMessage = document.getElementById('scoreMessage');
+        const restartBtn = document.getElementById('restartBtn');
+
+        // Flashcard elements
+        const flashcard = document.getElementById('flashcard');
+        const currentCardSpan = document.getElementById('currentCard');
+        const totalCardsSpan = document.getElementById('totalCards');
+        const progressBar = document.getElementById('progressBar');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const shuffleBtn = document.getElementById('shuffleBtn');
+
+        // Word elements
+        const englishWord = document.getElementById('englishWord');
+        const vietnameseWord = document.getElementById('vietnameseWord');
+        const wordType = document.getElementById('wordType');
+        const definition = document.getElementById('definition');
+        const pronunciationBtn = document.getElementById('pronunciationBtn');
+        
+        // Recording elements
+        const recordBtn = document.getElementById('recordBtn');
+        const playRecordingBtn = document.getElementById('playRecordingBtn');
+        const recordingStatus = document.getElementById('recordingStatus');
+        
+        // Recording variables
+        let mediaRecorder;
+        let recordedChunks = [];
+        let isRecording = false;
+        let recordedAudio = null;
+
+        // Score display elements
+        const readingScoreSpan = document.getElementById('readingScore');
+        const flashcardScoreSpan = document.getElementById('flashcardScore');
+        const grammarScoreOverallSpan = document.getElementById('grammarScoreOverall');
+        const matchingScoreOverallSpan = document.getElementById('matchingScoreOverall');
+        const totalScoreSpan = document.getElementById('totalScore');
+        const overallMessageSpan = document.getElementById('overallMessage');
+        const readingProgressBar = document.getElementById('readingProgress');
+        const flashcardProgressBar = document.getElementById('flashcardProgress');
+        const grammarProgressOverallBar = document.getElementById('grammarProgressOverall');
+        const matchingProgressOverallBar = document.getElementById('matchingProgressOverall');
+
+        // Matching game elements
+        const gameBoard = document.getElementById('gameBoard');
+        const matchingScoreSpan = document.getElementById('matchingScore');
+        const matchingTimeSpan = document.getElementById('matchingTime');
+        const matchingPairsSpan = document.getElementById('matchingPairs');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const resetGameBtn = document.getElementById('resetGameBtn');
+        const gameResults = document.getElementById('gameResults');
+        const finalTime = document.getElementById('finalTime');
+        const finalMatchingScore = document.getElementById('finalMatchingScore');
+        const gameMessage = document.getElementById('gameMessage');
+
+        // Grammar Match elements
+
+
+        // Initialize
+        totalCardsSpan.textContent = vocabulary.length;
+        grammarTotal.textContent = grammarQuestions.length;
+        updateCard();
+        updateGrammarQuestion();
+        updateOverallScore();
+
+        // Overall scoring functions
+        function updateOverallScore() {
+            // Calculate reading score (based on vocabulary words clicked)
+            const readingPercentage = Math.min((readingWordsClicked.size / vocabulary.length) * 100, 100);
+            overallScore.reading = Math.round(readingPercentage);
+            
+            // Calculate flashcard score (based on cards viewed)
+            const flashcardPercentage = Math.min((flashcardViewCount / vocabulary.length) * 100, 100);
+            overallScore.flashcards = Math.round(flashcardPercentage);
+            
+            // Grammar score is already calculated
+            overallScore.grammar = Math.round((grammarScore / grammarQuestions.length) * 100);
+            
+            // Matching score is already calculated
+            // overallScore.matching is updated in the matching game functions
+            
+            // Update display
+            readingScoreSpan.textContent = `${overallScore.reading}/100`;
+            flashcardScoreSpan.textContent = `${overallScore.flashcards}/100`;
+            grammarScoreOverallSpan.textContent = `${overallScore.grammar}/100`;
+            matchingScoreOverallSpan.textContent = `${overallScore.matching}/100`;
+            
+            // Update progress bars
+            readingProgressBar.style.width = `${overallScore.reading}%`;
+            flashcardProgressBar.style.width = `${overallScore.flashcards}%`;
+            grammarProgressOverallBar.style.width = `${overallScore.grammar}%`;
+            matchingProgressOverallBar.style.width = `${overallScore.matching}%`;
+            
+            // Calculate total score
+            const total = overallScore.reading + overallScore.flashcards + overallScore.grammar + overallScore.matching;
+            totalScoreSpan.textContent = total;
+            
+            // Update overall message
+            if (total >= 360) {
+                overallMessageSpan.textContent = '🌟 Xuất sắc! Bạn đã thành thạo tất cả! 🏆';
+            } else if (total >= 280) {
+                overallMessageSpan.textContent = '👏 Tuyệt vời! Bạn đang học rất tốt! ✨';
+            } else if (total >= 200) {
+                overallMessageSpan.textContent = '👍 Tốt lắm! Hãy tiếp tục cố gắng! 💪';
+            } else if (total >= 120) {
+                overallMessageSpan.textContent = '📚 Đang tiến bộ! Hãy học thêm nhé! 🌱';
+            } else if (total > 0) {
+                overallMessageSpan.textContent = '🚀 Bắt đầu tốt! Tiếp tục nào! 🎯';
+            } else {
+                overallMessageSpan.textContent = 'Hãy bắt đầu học để tích lũy điểm! 🌟';
+            }
+        }
+
+        function trackReadingProgress(word) {
+            readingWordsClicked.add(word.toLowerCase());
+            updateOverallScore();
+        }
+
+        function trackFlashcardProgress() {
+            const viewedCards = new Set();
+            viewedCards.add(currentIndex);
+            flashcardViewCount = Math.max(flashcardViewCount, currentIndex + 1);
+            updateOverallScore();
+        }
+
+        // Text-to-speech function
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.8;
+                
+                // Set female voice
+                const voices = speechSynthesis.getVoices();
+                const femaleVoice = voices.find(voice => 
+                    voice.lang.includes('en') && 
+                    (voice.name.toLowerCase().includes('female') || 
+                     voice.name.toLowerCase().includes('woman') ||
+                     voice.name.toLowerCase().includes('samantha') ||
+                     voice.name.toLowerCase().includes('karen') ||
+                     voice.name.toLowerCase().includes('susan'))
+                );
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+                
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Navigation event listeners
+        readingBtn.addEventListener('click', () => {
+            readingSection.classList.remove('hidden');
+            flashcardSection.classList.add('hidden');
+            grammarSection.classList.add('hidden');
+            matchingSection.classList.add('hidden');
+            grammarMatchSection.classList.add('hidden');
+            readingBtn.classList.add('bg-pink-200');
+            readingBtn.classList.remove('hover:bg-white/40');
+            flashcardBtn.classList.remove('bg-purple-200');
+            flashcardBtn.classList.add('hover:bg-white/40');
+            grammarBtn.classList.remove('bg-green-200');
+            grammarBtn.classList.add('hover:bg-white/40');
+            matchingBtn.classList.remove('bg-orange-200');
+            matchingBtn.classList.add('hover:bg-white/40');
+            grammarMatchBtn.classList.remove('bg-blue-200');
+            grammarMatchBtn.classList.add('hover:bg-white/40');
+        });
+
+        flashcardBtn.addEventListener('click', () => {
+            readingSection.classList.add('hidden');
+            flashcardSection.classList.remove('hidden');
+            grammarSection.classList.add('hidden');
+            matchingSection.classList.add('hidden');
+            flashcardBtn.classList.add('bg-purple-200');
+            flashcardBtn.classList.remove('hover:bg-white/40');
+            readingBtn.classList.remove('bg-pink-200');
+            readingBtn.classList.add('hover:bg-white/40');
+            grammarBtn.classList.remove('bg-green-200');
+            grammarBtn.classList.add('hover:bg-white/40');
+            matchingBtn.classList.remove('bg-orange-200');
+            matchingBtn.classList.add('hover:bg-white/40');
+        });
+
+        grammarBtn.addEventListener('click', () => {
+            readingSection.classList.add('hidden');
+            flashcardSection.classList.add('hidden');
+            grammarSection.classList.remove('hidden');
+            matchingSection.classList.add('hidden');
+            grammarBtn.classList.add('bg-green-200');
+            grammarBtn.classList.remove('hover:bg-white/40');
+            readingBtn.classList.remove('bg-pink-200');
+            readingBtn.classList.add('hover:bg-white/40');
+            flashcardBtn.classList.remove('bg-purple-200');
+            flashcardBtn.classList.add('hover:bg-white/40');
+            matchingBtn.classList.remove('bg-orange-200');
+            matchingBtn.classList.add('hover:bg-white/40');
+        });
+
+        matchingBtn.addEventListener('click', () => {
+            readingSection.classList.add('hidden');
+            flashcardSection.classList.add('hidden');
+            grammarSection.classList.add('hidden');
+            matchingSection.classList.remove('hidden');
+            matchingBtn.classList.add('bg-orange-200');
+            matchingBtn.classList.remove('hover:bg-white/40');
+            readingBtn.classList.remove('bg-pink-200');
+            readingBtn.classList.add('hover:bg-white/40');
+            flashcardBtn.classList.remove('bg-purple-200');
+            flashcardBtn.classList.add('hover:bg-white/40');
+            grammarBtn.classList.remove('bg-green-200');
+            grammarBtn.classList.add('hover:bg-white/40');
+        });
+
+
+
+        // Flashcard functionality
+        function updateCard() {
+            const word = vocabulary[currentIndex];
+            englishWord.textContent = word.english;
+            vietnameseWord.textContent = word.vietnamese;
+            wordType.textContent = `(${word.type})`;
+            definition.textContent = word.definition;
+            
+            currentCardSpan.textContent = currentIndex + 1;
+            progressBar.style.width = `${((currentIndex + 1) / vocabulary.length) * 100}%`;
+            
+            // Track flashcard progress
+            trackFlashcardProgress();
+            
+            // Reset flip state
+            flashcard.classList.remove('flipped');
+            isFlipped = false;
+            
+            // Reset recording state
+            if (isRecording) {
+                stopRecording();
+            }
+            playRecordingBtn.classList.add('hidden');
+            recordingStatus.classList.add('hidden');
+            if (recordedAudio) {
+                URL.revokeObjectURL(recordedAudio);
+                recordedAudio = null;
+            }
+        }
+
+        // Flip card
+        flashcard.addEventListener('click', () => {
+            flashcard.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+        });
+
+        // Navigation buttons
+        prevBtn.addEventListener('click', () => {
+            currentIndex = currentIndex > 0 ? currentIndex - 1 : vocabulary.length - 1;
+            updateCard();
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentIndex = currentIndex < vocabulary.length - 1 ? currentIndex + 1 : 0;
+            updateCard();
+        });
+
+        // Shuffle functionality
+        shuffleBtn.addEventListener('click', () => {
+            for (let i = vocabulary.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [vocabulary[i], vocabulary[j]] = [vocabulary[j], vocabulary[i]];
+            }
+            currentIndex = 0;
+            updateCard();
+        });
+
+        // Pronunciation
+        pronunciationBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            speakText(vocabulary[currentIndex].english);
+        });
+
+        // Recording functionality
+        async function initializeRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    if (event.data.size > 0) {
+                        recordedChunks.push(event.data);
+                    }
+                };
+                
+                mediaRecorder.onstop = () => {
+                    const blob = new Blob(recordedChunks, { type: 'audio/wav' });
+                    recordedAudio = URL.createObjectURL(blob);
+                    playRecordingBtn.classList.remove('hidden');
+                    recordingStatus.textContent = '✅ Đã thu âm xong! Nhấn "Nghe lại" để kiểm tra.';
+                    recordingStatus.classList.remove('hidden');
+                };
+                
+                return true;
+            } catch (error) {
+                recordingStatus.textContent = '❌ Không thể truy cập microphone. Vui lòng cho phép quyền truy cập.';
+                recordingStatus.classList.remove('hidden');
+                return false;
+            }
+        }
+
+        function startRecording() {
+            if (!mediaRecorder) return;
+            
+            recordedChunks = [];
+            isRecording = true;
+            mediaRecorder.start();
+            
+            recordBtn.textContent = '⏹️ Dừng';
+            recordBtn.classList.remove('bg-pink-300', 'hover:bg-pink-400');
+            recordBtn.classList.add('bg-red-300', 'hover:bg-red-400');
+            recordingStatus.textContent = '🎤 Đang thu âm... Hãy phát âm từ này!';
+            recordingStatus.classList.remove('hidden');
+            playRecordingBtn.classList.add('hidden');
+        }
+
+        function stopRecording() {
+            if (!mediaRecorder || !isRecording) return;
+            
+            isRecording = false;
+            mediaRecorder.stop();
+            
+            recordBtn.textContent = '🎤 Thu âm';
+            recordBtn.classList.remove('bg-red-300', 'hover:bg-red-400');
+            recordBtn.classList.add('bg-pink-300', 'hover:bg-pink-400');
+        }
+
+        function playRecording() {
+            if (recordedAudio) {
+                const audio = new Audio(recordedAudio);
+                audio.play();
+                recordingStatus.textContent = '🔊 Đang phát âm thanh của bạn...';
+            }
+        }
+
+        // Recording event listeners
+        recordBtn.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            
+            if (!mediaRecorder) {
+                const initialized = await initializeRecording();
+                if (!initialized) return;
+            }
+            
+            if (isRecording) {
+                stopRecording();
+            } else {
+                startRecording();
+            }
+        });
+
+        playRecordingBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            playRecording();
+        });
+
+        // Speak buttons in reading section
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('speak-btn')) {
+                const text = e.target.getAttribute('data-text') || e.target.closest('.speak-btn').getAttribute('data-text');
+                if (text) {
+                    speakText(text);
+                }
+            }
+        });
+
+        // Vocabulary word click functionality
+        let currentPopup = null;
+
+        function createVocabPopup(word, x, y) {
+            // Remove existing popup
+            if (currentPopup) {
+                currentPopup.remove();
+            }
+
+            // Find word in vocabulary
+            const vocabItem = vocabulary.find(item => item.english.toLowerCase() === word.toLowerCase());
+            if (!vocabItem) return;
+
+            // Create popup
+            const popup = document.createElement('div');
+            popup.className = 'vocab-popup';
+            popup.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <h4 class="font-bold text-lg text-gray-800">${vocabItem.english}</h4>
+                    <button class="speak-popup-btn text-blue-600 hover:text-blue-800 text-xl" data-text="${vocabItem.english}">🔊</button>
+                </div>
+                <p class="text-sm text-gray-600 mb-2">(${vocabItem.type})</p>
+                <p class="text-blue-600 font-semibold mb-1">${vocabItem.vietnamese}</p>
+                <p class="text-gray-700 text-sm">${vocabItem.definition}</p>
+                <button class="close-popup-btn absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-lg">×</button>
+            `;
+
+            // Position popup
+            popup.style.left = Math.min(x, window.innerWidth - 320) + 'px';
+            popup.style.top = Math.max(y - 100, 10) + 'px';
+
+            document.body.appendChild(popup);
+            currentPopup = popup;
+
+            // Show popup with animation
+            setTimeout(() => popup.classList.add('show'), 10);
+
+            // Add event listeners
+            popup.querySelector('.speak-popup-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                speakText(vocabItem.english);
+            });
+
+            popup.querySelector('.close-popup-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                closePopup();
+            });
+
+            // Auto close after 5 seconds
+            setTimeout(closePopup, 5000);
+        }
+
+        function closePopup() {
+            if (currentPopup) {
+                currentPopup.classList.remove('show');
+                setTimeout(() => {
+                    if (currentPopup) {
+                        currentPopup.remove();
+                        currentPopup = null;
+                    }
+                }, 200);
+            }
+        }
+
+        // Vocabulary word click event
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('vocab-word')) {
+                e.preventDefault();
+                const word = e.target.getAttribute('data-word');
+                const rect = e.target.getBoundingClientRect();
+                createVocabPopup(word, rect.left, rect.bottom + window.scrollY);
+                
+                // Track reading progress
+                trackReadingProgress(word);
+                
+                // Also speak the word
+                speakText(word);
+            } else if (!e.target.closest('.vocab-popup')) {
+                // Close popup if clicking outside
+                closePopup();
+            }
+        });
+
+        // Grammar functionality
+        function updateGrammarQuestion() {
+            const question = grammarQuestions[currentGrammarIndex];
+            questionText.textContent = question.question;
+            
+            // Update options
+            optionsContainer.innerHTML = '';
+            question.options.forEach(option => {
+                const label = document.createElement('label');
+                label.className = 'flex items-center p-3 bg-white rounded-lg cursor-pointer hover:bg-green-100 transition-colors';
+                label.innerHTML = `
+                    <input type="radio" name="answer" value="${option}" class="mr-3">
+                    <span>${option}</span>
+                `;
+                optionsContainer.appendChild(label);
+            });
+            
+            // Update progress
+            grammarCurrent.textContent = currentGrammarIndex + 1;
+            grammarProgress.style.width = `${((currentGrammarIndex + 1) / grammarQuestions.length) * 100}%`;
+            
+            // Reset state
+            feedback.classList.add('hidden');
+            checkBtn.classList.remove('hidden');
+            nextGrammarBtn.classList.add('hidden');
+            hasAnswered = false;
+            
+            // Clear radio selections
+            document.querySelectorAll('input[name="answer"]').forEach(input => {
+                input.checked = false;
+            });
+        }
+
+        // Audio feedback functions
+        function playCorrectSound() {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance('Correct!');
+                utterance.lang = 'en-US';
+                utterance.rate = 1.2;
+                utterance.pitch = 1.2;
+                
+                // Set female voice
+                const voices = speechSynthesis.getVoices();
+                const femaleVoice = voices.find(voice => 
+                    voice.lang.includes('en') && 
+                    (voice.name.toLowerCase().includes('female') || 
+                     voice.name.toLowerCase().includes('woman') ||
+                     voice.name.toLowerCase().includes('samantha') ||
+                     voice.name.toLowerCase().includes('karen') ||
+                     voice.name.toLowerCase().includes('susan'))
+                );
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+                
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function playIncorrectSound() {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance('Oops!');
+                utterance.lang = 'en-US';
+                utterance.rate = 1.0;
+                utterance.pitch = 0.8;
+                
+                // Set female voice
+                const voices = speechSynthesis.getVoices();
+                const femaleVoice = voices.find(voice => 
+                    voice.lang.includes('en') && 
+                    (voice.name.toLowerCase().includes('female') || 
+                     voice.name.toLowerCase().includes('woman') ||
+                     voice.name.toLowerCase().includes('samantha') ||
+                     voice.name.toLowerCase().includes('karen') ||
+                     voice.name.toLowerCase().includes('susan'))
+                );
+                if (femaleVoice) {
+                    utterance.voice = femaleVoice;
+                }
+                
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function checkAnswer() {
+            const selectedAnswer = document.querySelector('input[name="answer"]:checked');
+            if (!selectedAnswer) {
+                // Show inline message instead of alert
+                feedbackText.textContent = '⚠️ Vui lòng chọn một đáp án!';
+                feedbackText.className = 'font-medium mb-2 text-orange-600';
+                feedback.className = 'mb-6 p-4 rounded-lg bg-orange-50 border border-orange-200';
+                feedback.classList.remove('hidden');
+                explanationText.textContent = '';
+                return;
+            }
+
+            const question = grammarQuestions[currentGrammarIndex];
+            const isCorrect = selectedAnswer.value === question.correct;
+            
+            if (isCorrect) {
+                grammarScore++;
+                grammarScoreSpan.textContent = grammarScore;
+                feedbackText.textContent = '✅ Chính xác!';
+                feedbackText.className = 'font-medium mb-2 text-green-600';
+                feedback.className = 'mb-6 p-4 rounded-lg bg-green-50 border border-green-200';
+                playCorrectSound(); // Play success sound
+            } else {
+                feedbackText.textContent = `❌ Sai rồi! Đáp án đúng là: ${question.correct}`;
+                feedbackText.className = 'font-medium mb-2 text-red-600';
+                feedback.className = 'mb-6 p-4 rounded-lg bg-red-50 border border-red-200';
+                playIncorrectSound(); // Play error sound
+            }
+            
+            // Update overall score
+            updateOverallScore();
+            
+            explanationText.textContent = question.explanation;
+            feedback.classList.remove('hidden');
+            checkBtn.classList.add('hidden');
+            
+            // Highlight correct/incorrect answers
+            document.querySelectorAll('input[name="answer"]').forEach(input => {
+                const label = input.closest('label');
+                if (input.value === question.correct) {
+                    label.classList.add('bg-green-100', 'border-green-300');
+                } else if (input.checked && input.value !== question.correct) {
+                    label.classList.add('bg-red-100', 'border-red-300');
+                }
+                input.disabled = true;
+            });
+            
+            if (currentGrammarIndex < grammarQuestions.length - 1) {
+                nextGrammarBtn.classList.remove('hidden');
+            } else {
+                showResults();
+            }
+            
+            hasAnswered = true;
+        }
+
+        function nextGrammarQuestion() {
+            currentGrammarIndex++;
+            updateGrammarQuestion();
+        }
+
+        function showResults() {
+            const percentage = Math.round((grammarScore / grammarQuestions.length) * 100);
+            finalScore.textContent = grammarScore;
+            
+            if (percentage >= 90) {
+                scoreMessage.textContent = '🌟 Xuất sắc! Bạn đã nắm vững ngữ pháp!';
+            } else if (percentage >= 70) {
+                scoreMessage.textContent = '👍 Tốt lắm! Bạn hiểu khá rõ về ngữ pháp.';
+            } else if (percentage >= 50) {
+                scoreMessage.textContent = '📚 Ổn đấy! Hãy ôn lại một chút nhé.';
+            } else {
+                scoreMessage.textContent = '💪 Cần cố gắng thêm! Hãy học lại và thử lần nữa.';
+            }
+            
+            resultsSection.classList.remove('hidden');
+            nextGrammarBtn.classList.add('hidden');
+        }
+
+        function restartGrammar() {
+            currentGrammarIndex = 0;
+            grammarScore = 0;
+            grammarScoreSpan.textContent = '0';
+            resultsSection.classList.add('hidden');
+            updateGrammarQuestion();
+            updateOverallScore();
+        }
+
+        // Grammar event listeners
+        checkBtn.addEventListener('click', checkAnswer);
+        nextGrammarBtn.addEventListener('click', nextGrammarQuestion);
+        restartBtn.addEventListener('click', restartGrammar);
+
+        // Matching Game Functions
+        function initializeGame() {
+            // Select 10 random words for the game
+            const shuffledVocab = [...vocabulary].sort(() => Math.random() - 0.5).slice(0, 10);
+            
+            // Create cards array with English and Vietnamese pairs
+            gameCards = [];
+            shuffledVocab.forEach((word, index) => {
+                gameCards.push({
+                    id: `en-${index}`,
+                    text: word.english,
+                    type: 'english',
+                    pairId: index,
+                    matched: false
+                });
+                gameCards.push({
+                    id: `vi-${index}`,
+                    text: word.vietnamese,
+                    type: 'vietnamese',
+                    pairId: index,
+                    matched: false
+                });
+            });
+            
+            // Shuffle all cards
+            gameCards.sort(() => Math.random() - 0.5);
+            
+            // Reset game state
+            selectedCards = [];
+            matchedPairs = 0;
+            gameScore = 100; // Start with 100 points
+            gameStartTime = Date.now();
+            isGameActive = true;
+            
+            // Update display
+            matchingScoreSpan.textContent = gameScore;
+            matchingPairsSpan.textContent = `0/10`;
+            gameResults.classList.add('hidden');
+            
+            // Start timer
+            startTimer();
+            
+            // Render cards
+            renderGameBoard();
+        }
+
+        function renderGameBoard() {
+            gameBoard.innerHTML = '';
+            
+            gameCards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = `game-card bg-white rounded-lg p-4 text-center shadow-lg border-2 border-gray-200 ${card.matched ? 'matched' : ''}`;
+                cardElement.dataset.cardId = card.id;
+                cardElement.dataset.pairId = card.pairId;
+                cardElement.dataset.type = card.type;
+                
+                const textElement = document.createElement('div');
+                textElement.className = 'font-semibold text-gray-800';
+                textElement.textContent = card.text;
+                
+                const typeLabel = document.createElement('div');
+                typeLabel.className = 'text-xs text-gray-500 mt-2';
+                typeLabel.textContent = card.type === 'english' ? '🇺🇸 English' : '🇻🇳 Tiếng Việt';
+                
+                cardElement.appendChild(textElement);
+                cardElement.appendChild(typeLabel);
+                
+                if (!card.matched) {
+                    cardElement.addEventListener('click', () => handleCardClick(card, cardElement));
+                }
+                
+                gameBoard.appendChild(cardElement);
+            });
+        }
+
+        function handleCardClick(card, cardElement) {
+            if (!isGameActive || card.matched || selectedCards.length >= 2) return;
+            
+            // Add selected state
+            cardElement.classList.add('selected');
+            selectedCards.push({ card, element: cardElement });
+            
+            // Speak the word
+            if (card.type === 'english') {
+                speakText(card.text);
+            }
+            
+            if (selectedCards.length === 2) {
+                setTimeout(() => checkMatch(), 500);
+            }
+        }
+
+        function checkMatch() {
+            const [first, second] = selectedCards;
+            
+            if (first.card.pairId === second.card.pairId && first.card.type !== second.card.type) {
+                // Correct match!
+                first.card.matched = true;
+                second.card.matched = true;
+                
+                first.element.classList.remove('selected');
+                second.element.classList.remove('selected');
+                first.element.classList.add('matched', 'correct-flash');
+                second.element.classList.add('matched', 'correct-flash');
+                
+                matchedPairs++;
+                gameScore += 10; // Bonus points for correct match
+                
+                // Play success sound
+                playCorrectSound();
+                
+                // Update display
+                matchingScoreSpan.textContent = gameScore;
+                matchingPairsSpan.textContent = `${matchedPairs}/10`;
+                
+                // Check if game is complete
+                if (matchedPairs === 10) {
+                    setTimeout(() => endGame(), 1000);
+                }
+            } else {
+                // Wrong match
+                first.element.classList.add('wrong');
+                second.element.classList.add('wrong');
+                
+                gameScore = Math.max(0, gameScore - 5); // Lose points for wrong match
+                matchingScoreSpan.textContent = gameScore;
+                
+                // Play error sound
+                playIncorrectSound();
+                
+                setTimeout(() => {
+                    first.element.classList.remove('selected', 'wrong');
+                    second.element.classList.remove('selected', 'wrong');
+                }, 1000);
+            }
+            
+            selectedCards = [];
+        }
+
+        function startTimer() {
+            gameTimer = setInterval(() => {
+                if (!isGameActive) return;
+                
+                const elapsed = Math.floor((Date.now() - gameStartTime) / 1000);
+                const minutes = Math.floor(elapsed / 60);
+                const seconds = elapsed % 60;
+                matchingTimeSpan.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function endGame() {
+            isGameActive = false;
+            clearInterval(gameTimer);
+            
+            const totalTime = Math.floor((Date.now() - gameStartTime) / 1000);
+            const minutes = Math.floor(totalTime / 60);
+            const seconds = totalTime % 60;
+            const timeString = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Calculate final score based on time bonus
+            let timeBonus = Math.max(0, 120 - totalTime); // Bonus for completing under 2 minutes
+            const finalScore = Math.min(100, gameScore + timeBonus);
+            
+            // Update overall score
+            overallScore.matching = finalScore;
+            overallScore.matchingCompleted = true;
+            updateOverallScore();
+            
+            // Show results
+            finalTime.textContent = timeString;
+            finalMatchingScore.textContent = finalScore;
+            
+            if (finalScore >= 90) {
+                gameMessage.textContent = '🌟 Tuyệt vời! Bạn là cao thủ ghép từ!';
+            } else if (finalScore >= 70) {
+                gameMessage.textContent = '👍 Giỏi lắm! Tốc độ và độ chính xác tốt!';
+            } else if (finalScore >= 50) {
+                gameMessage.textContent = '📚 Ổn đấy! Hãy thử lại để cải thiện!';
+            } else {
+                gameMessage.textContent = '💪 Cần luyện tập thêm! Đừng bỏ cuộc nhé!';
+            }
+            
+            gameResults.classList.remove('hidden');
+            startGameBtn.classList.add('hidden');
+            resetGameBtn.classList.remove('hidden');
+        }
+
+        function resetGame() {
+            isGameActive = false;
+            clearInterval(gameTimer);
+            
+            selectedCards = [];
+            matchedPairs = 0;
+            gameScore = 0;
+            
+            matchingScoreSpan.textContent = '0';
+            matchingTimeSpan.textContent = '0:00';
+            matchingPairsSpan.textContent = '0/10';
+            
+            gameBoard.innerHTML = '';
+            gameResults.classList.add('hidden');
+            startGameBtn.classList.remove('hidden');
+            resetGameBtn.classList.add('hidden');
+        }
+
+
+
+        // Matching game event listeners
+        startGameBtn.addEventListener('click', initializeGame);
+        resetGameBtn.addEventListener('click', resetGame);
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (flashcardSection.classList.contains('hidden')) return;
+            
+            if (e.key === 'ArrowLeft') {
+                prevBtn.click();
+            } else if (e.key === 'ArrowRight') {
+                nextBtn.click();
+            } else if (e.key === ' ') {
+                e.preventDefault();
+                flashcard.click();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9907c8cbf5526039',t:'MTc2MDc4Nzg3Mi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
